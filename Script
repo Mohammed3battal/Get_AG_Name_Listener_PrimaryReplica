@@ -1,0 +1,19 @@
+-- Get Availability Group details including name, listener, primary replica, and local role
+SELECT
+    ag.name AS [AG Name],
+    ls.dns_name AS [Listener Name],
+    ISNULL(agstates.primary_replica, '') AS [Primary Replica Server],
+    ISNULL(arstates.role, 3) AS [Local Replica Role]  -- 1 = Primary, 2 = Secondary, 3 = Resolving
+FROM 
+    master.sys.availability_groups AS ag
+INNER JOIN 
+    sys.availability_group_listeners AS ls ON ag.group_id = ls.group_id
+LEFT JOIN 
+    master.sys.dm_hadr_availability_group_states AS agstates ON ag.group_id = agstates.group_id
+INNER JOIN 
+    master.sys.availability_replicas AS ar ON ag.group_id = ar.group_id
+INNER JOIN 
+    master.sys.dm_hadr_availability_replica_states AS arstates 
+    ON ar.replica_id = arstates.replica_id AND arstates.is_local = 1
+ORDER BY 
+    [AG Name] ASC;
